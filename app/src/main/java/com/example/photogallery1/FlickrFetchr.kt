@@ -65,15 +65,6 @@ class FlickrFetchr: PagingSource<Int, GalleryItem>() {
         return galleryItems
     }
 
-    @WorkerThread
-    fun fetchPhoto(url: String): Bitmap? {
-        val response: Response<ResponseBody> = flickrApi.fetchUrlBytes(url).execute()
-        val bitmap = response.body()?.byteStream()?.use(BitmapFactory::decodeStream)
-        Log.i(TAG, "Decoded bitmap=$bitmap from Response=$response")
-
-        return bitmap
-    }
-
     override fun getRefreshKey(state: PagingState<Int, GalleryItem>): Int? {
         val anchorPosition = state.anchorPosition ?: return null
         val anchorPage = state.closestPageToPosition(anchorPosition) ?: return null
@@ -95,6 +86,4 @@ class FlickrFetchr: PagingSource<Int, GalleryItem>() {
             else startKey + 1
         )
     }
-
-    private fun ensureValidKey(key: Int) = max(STARTING_KEY, key)
 }

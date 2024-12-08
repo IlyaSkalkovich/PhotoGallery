@@ -34,6 +34,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.android.material.internal.ViewUtils.addOnGlobalLayoutListener
 import com.google.android.material.internal.ViewUtils.removeOnGlobalLayoutListener
 import kotlinx.coroutines.flow.collectLatest
@@ -46,22 +48,10 @@ private const val DEFAULT_RECYCLER_VIEW_COLUMN_WIDTH = 300
 class PhotoGalleryFragment : Fragment() {
     private lateinit var photoRecyclerView: RecyclerView
     private val photoGalleryViewModel: PhotoGalleryViewModel by viewModels()
-    private lateinit var thumbnailDownloader: ThumbnailDownloader<PhotoHolder>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         StrictMode.enableDefaults()
         super.onCreate(savedInstanceState)
-
-        retainInstance = true
-
-        val responseHandler = Handler(Looper.getMainLooper())
-
-        thumbnailDownloader = ThumbnailDownloader(responseHandler) { photoHolder, bitmap ->
-                val drawable = BitmapDrawable(resources, bitmap)
-                photoHolder.bindDrawable(drawable)
-            }
-
-        lifecycle.addObserver(thumbnailDownloader.fragmentLifecycleObserver)
     }
 
     override fun onCreateView(
@@ -88,25 +78,11 @@ class PhotoGalleryFragment : Fragment() {
         val photoAdapter = PhotoAdapter()
         photoRecyclerView.adapter = photoAdapter
 
-        viewLifecycleOwner.lifecycle.addObserver(thumbnailDownloader.viewLifecycleObserver)
-
         viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(lifecycle.currentState) {
             photoGalleryViewModel.galleryItems.collectLatest { galleryItems ->
                 photoAdapter.submitData(galleryItems)
             }
         } }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        viewLifecycleOwner.lifecycle.removeObserver(thumbnailDownloader.viewLifecycleObserver)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        lifecycle.removeObserver(thumbnailDownloader.fragmentLifecycleObserver)
     }
 
     private object ArticleComparator : DiffUtil.ItemCallback<GalleryItem>(){
@@ -132,19 +108,18 @@ class PhotoGalleryFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: PhotoHolder, position: Int) {
-            val placeholder: Drawable = ContextCompat.getDrawable(
-                requireContext(),
-                R.drawable.placeholder
-            ) ?: ColorDrawable()
-
-            getItem(position)?.let { thumbnailDownloader.queueThumbnail(holder, it.url) }
-
-            holder.bindDrawable(placeholder)
+            getItem(position)?.let { holder.bind(it.url) }
         }
     }
 
-    private class PhotoHolder(itemImageView: ImageView) : ViewHolder(itemImageView) {
-        val bindDrawable: (Drawable) -> Unit = itemImageView::setImageDrawable
+    private inner class PhotoHolder(private val itemImageView: ImageView) : ViewHolder(itemImageView) {
+        fun bind(url: String) {
+            Glide.with(this@PhotoGalleryFragment)
+                .load(url)
+                .placeholder(R.drawable.placeholder)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(itemImageView)
+        }
     }
 
     companion object {

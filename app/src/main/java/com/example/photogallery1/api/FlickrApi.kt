@@ -20,7 +20,4 @@ interface FlickrApi {
         @Query("page") whichPage: Int,
         @Query("per_page") photosPerPage: Int,
     ): Response<PhotoResponse>
-
-    @GET
-    fun fetchUrlBytes(@Url url: String): Call<ResponseBody>
 }
