@@ -10,12 +10,7 @@ import retrofit2.http.QueryMap
 import retrofit2.http.Url
 
 interface FlickrApi {
-    @GET("services/rest/?method=flickr.interestingness.getList" +
-            "&api_key=601437fa10cca35e1feacf5295e5b8b9" +
-            "&format=json" +
-            "&nojsoncallback=1" +
-            "&extras=url_s"
-    )
+    @GET("services/rest?method=flickr.interestingness.getList")
     suspend fun fetchPhotos(
         @Query("page") whichPage: Int,
         @Query("per_page") photosPerPage: Int,

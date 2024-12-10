@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -36,13 +37,21 @@ class FlickrFetchr: PagingSource<Int, GalleryItem>() {
     private val flickrApi: FlickrApi
 
     init {
+        val client = OkHttpClient.Builder()
+            .addInterceptor(PhotoInterceptor())
+            .build()
+
         val gsonBuilder = GsonBuilder().registerTypeAdapter(
             PhotoResponse::class.javaObjectType,
             PhotoDeserializer()
         ).create()
 
-        val retrofit: Retrofit = Retrofit.Builder().baseUrl("https://api.flickr.com/")
-            .addConverterFactory(GsonConverterFactory.create(gsonBuilder)).build()
+        val retrofit: Retrofit = Retrofit
+            .Builder()
+            .baseUrl("https://api.flickr.com/")
+            .addConverterFactory(GsonConverterFactory.create(gsonBuilder))
+            .client(client)
+            .build()
 
         flickrApi = retrofit.create(FlickrApi::class.java)
     }
