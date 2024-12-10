@@ -1,1 +1,1 @@
-Pagination, Flows, Retrofit, HandlerThread, VM, RecyclerView
+Pagination, Flows, Retrofit, Glide, VM, RecyclerView
