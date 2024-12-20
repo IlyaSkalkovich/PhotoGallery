@@ -24,6 +24,7 @@ class PhotoInterceptor : Interceptor {
             .url(newUrl)
             .build()
 
+
         return chain.proceed(newRequest)
 
     }

@@ -2,6 +2,7 @@ package com.example.photogallery1
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.net.TrafficStats
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
@@ -22,12 +23,15 @@ class ThumbnailDownloader<in T>(
 ) : HandlerThread(TAG), DefaultLifecycleObserver {
     private var hasQuit = false
     private val requestMap = ConcurrentHashMap<T, String>()
-    private val flickrFetchr = FlickrFetchr()
+    private val galleryItemsRepository = GalleryItemsRepository()
+    private val flickrFetchr = galleryItemsRepository.provideFlickrFetchr()
     private lateinit var requestHandler: Handler
 
     val fragmentLifecycleObserver = object : DefaultLifecycleObserver {
         override fun onCreate(owner: LifecycleOwner) {
             super.onCreate(owner)
+
+            TrafficStats.setThreadStatsTag(Thread.currentThread().id.toInt())
 
             Log.i(TAG, "Starting background thread")
             start()
@@ -64,7 +68,7 @@ class ThumbnailDownloader<in T>(
             override fun handleMessage(msg: Message) {
                 if (msg.what == MESSAGE_DOWNLOAD) {
                     val target = msg.obj as T
-                    Log.i(TAG, "Got a request for URL: ${requestMap[target]}")
+                    //Log.i(TAG, "Got a request for URL: ${requestMap[target]}")
                     handleRequest(target)
                 }
             }
@@ -85,7 +89,7 @@ class ThumbnailDownloader<in T>(
     }
 
     fun queueThumbnail(target: T, url: String) {
-        Log.i(TAG, "Got a URL: $url")
+        //Log.i(TAG, "Got a URL: $url")
 
         requestMap[target] = url
         requestHandler.obtainMessage(MESSAGE_DOWNLOAD, target).sendToTarget()
