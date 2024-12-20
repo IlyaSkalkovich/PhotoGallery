@@ -10,13 +10,21 @@ import android.os.StrictMode
 import android.provider.ContactsContract.Contacts.Photo
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.view.menu.MenuPresenter
+import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
+import androidx.core.view.contains
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.size
 import androidx.core.view.updateLayoutParams
@@ -44,10 +52,10 @@ import kotlinx.coroutines.launch
 private const val TAG = "PhotoGalleryFragment"
 private const val DEFAULT_RECYCLER_VIEW_COLUMN_WIDTH = 300
 
-
-class PhotoGalleryFragment : Fragment() {
+class PhotoGalleryFragment : Fragment(), MenuProvider {
     private lateinit var photoRecyclerView: RecyclerView
     private val photoGalleryViewModel: PhotoGalleryViewModel by viewModels()
+    private lateinit var photoAdapter: PhotoAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         StrictMode.enableDefaults()
@@ -75,14 +83,55 @@ class PhotoGalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val photoAdapter = PhotoAdapter()
+        photoAdapter = PhotoAdapter()
         photoRecyclerView.adapter = photoAdapter
 
-        viewLifecycleOwner.lifecycleScope.launch { repeatOnLifecycle(lifecycle.currentState) {
-            photoGalleryViewModel.galleryItems.collectLatest { galleryItems ->
-                photoAdapter.submitData(galleryItems)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            this,
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(lifecycle.currentState) {
+                photoGalleryViewModel.galleryItems.collectLatest { galleryItems ->
+                    photoAdapter.submitData(galleryItems)
+                }
             }
-        } }
+        }
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.fragment_photo_gallery, menu)
+
+        val menuItem = menu.findItem(R.id.menu_item_search)
+        val searchView = menuItem.actionView as SearchView
+
+        searchView.apply {
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(queryText: String): Boolean {
+                    Log.d(TAG, "QueryTextSubmit: $queryText")
+
+                    photoGalleryViewModel.setSearchTerm(queryText)
+                    photoAdapter.refresh()
+
+                    return true
+                }
+
+                override fun onQueryTextChange(queryText: String): Boolean {
+                    //Log.d(TAG, "QueryTextChange: $queryText")
+                    return false
+                }
+            })
+        }
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        photoGalleryViewModel.setSearchTerm("")
+        photoAdapter.refresh()
+
+        return true
     }
 
     private object ArticleComparator : DiffUtil.ItemCallback<GalleryItem>(){
