@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.view.menu.MenuPresenter
 import androidx.appcompat.widget.SearchView
@@ -26,6 +27,7 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.contains
 import androidx.core.view.doOnPreDraw
+import androidx.core.view.isVisible
 import androidx.core.view.size
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -37,6 +39,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.paging.LoadState
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -55,6 +58,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
     private val photoGalleryViewModel: PhotoGalleryViewModel by viewModels()
     private lateinit var thumbnailDownloader: ThumbnailDownloader<PhotoHolder>
     private lateinit var photoAdapter: PhotoAdapter
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         StrictMode.enableDefaults()
@@ -79,6 +83,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
     ): View {
         val view = inflater.inflate(R.layout.fragment_photo_gallery, container, false)
         photoRecyclerView = view.findViewById(R.id.photo_recycler_view)
+        progressBar = view.findViewById(R.id.progressBar)
 
         photoRecyclerView.doOnPreDraw {
             val recyclerViewWidth = photoRecyclerView.width
@@ -95,6 +100,18 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
 
         photoAdapter = PhotoAdapter()
         photoRecyclerView.adapter = photoAdapter
+
+        photoAdapter.addLoadStateListener { state ->
+            progressBar.isVisible = state.refresh is LoadState.Loading
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(lifecycle.currentState) {
+                photoGalleryViewModel.galleryItems.collectLatest { galleryItems ->
+                    photoAdapter.submitData(galleryItems)
+                }
+            }
+        }
 
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(
@@ -138,7 +155,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
                     Log.d(TAG, "QueryTextSubmit: $queryText")
 
                     photoGalleryViewModel.setSearchTerm(queryText)
-                    //photoAdapter.refresh()
+                    photoAdapter.refresh()
 
                     return true
                 }
@@ -153,7 +170,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         photoGalleryViewModel.setSearchTerm("")
-        //photoAdapter.refresh()
+        photoAdapter.refresh()
 
         return true
     }

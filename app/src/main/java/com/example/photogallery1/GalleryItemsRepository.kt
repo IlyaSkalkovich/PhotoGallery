@@ -6,7 +6,7 @@ class GalleryItemsRepository {
     fun providePagingSource(
         fetchGalleryItems: suspend (Int, Int, String) -> List<GalleryItem>,
         whichPage: Int = 1,
-        photosPerPage: Int = 100,
+        photosPerPage: Int = 500,
         query: String = ""
     ) = PhotoGalleryPagingSource(fetchGalleryItems, whichPage, photosPerPage, query)
 }

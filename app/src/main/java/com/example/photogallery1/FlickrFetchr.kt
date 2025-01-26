@@ -40,9 +40,9 @@ class FlickrFetchr {
     }
 
     suspend fun fetchGalleryItems(
-        whichPage: Int = 1,
-        photosPerPage: Int = 100,
-        query: String = ""
+        whichPage: Int,
+        photosPerPage: Int,
+        query: String
     ): List<GalleryItem> {
         return if (query.isBlank())
             fetchPhotoMetadata(flickrApi.fetchInterestingPhotos(whichPage, photosPerPage))

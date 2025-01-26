@@ -14,11 +14,10 @@ class PhotoGalleryViewModel : ViewModel() {
     private val flickrFetchr = galleryItemsRepository.provideFlickrFetchr()
 
     val galleryItems: Flow<PagingData<GalleryItem>> = Pager(
-        config = PagingConfig(pageSize = 100, enablePlaceholders = false),
+        config = PagingConfig(pageSize = 500, enablePlaceholders = false),
         pagingSourceFactory = { galleryItemsRepository.providePagingSource(
             flickrFetchr::fetchGalleryItems,
             query = mutableSearchTerm.value,
-            whichPage = 5
         )}
     ).flow.cachedIn(viewModelScope)
 

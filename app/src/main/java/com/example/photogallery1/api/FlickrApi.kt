@@ -21,5 +21,6 @@ interface FlickrApi {
     suspend fun searchPhotos(
         @Query("text") query: String,
         @Query("page") whichPage: Int,
-        @Query("per_page") photosPerPage: Int,): Response<PhotoResponse>
+        @Query("per_page") photosPerPage: Int,
+        ): Response<PhotoResponse>
 }
