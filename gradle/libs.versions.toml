@@ -1,5 +1,6 @@
 [versions]
 agp = "8.5.1"
+compiler = "4.7.1"
 converterGson = "2.4.0"
 converterscalars = "2.5.0"
 converterScalarsVersion = "2.9.0"
@@ -29,6 +30,7 @@ androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtim
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterScalarsVersion" }
 converterscalars = { module = "com.squareup.retrofit2:converterscalars", version.ref = "converterscalars" }

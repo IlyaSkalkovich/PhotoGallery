@@ -12,11 +12,12 @@ interface FlickrApi {
     suspend fun fetchInterestingPhotos(
         @Query("page") whichPage: Int,
         @Query("per_page") photosPerPage: Int,
-    ): Response<PhotoResponse>
+        ): Response<PhotoResponse>
 
     @GET("services/rest?method=flickr.photos.search")
     suspend fun searchPhotos(
         @Query("text") query: String,
         @Query("page") whichPage: Int,
-        @Query("per_page") photosPerPage: Int,): Response<PhotoResponse>
+        @Query("per_page") photosPerPage: Int,
+        ): Response<PhotoResponse>
 }

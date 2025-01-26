@@ -1,13 +1,7 @@
 package com.example.photogallery1
 
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.os.StrictMode
-import android.provider.ContactsContract.Contacts.Photo
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
@@ -15,28 +9,19 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.ImageView
-import android.widget.TextView
-import androidx.appcompat.view.menu.MenuPresenter
+import android.widget.ProgressBar
 import androidx.appcompat.widget.SearchView
-import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.core.view.contains
 import androidx.core.view.doOnPreDraw
-import androidx.core.view.size
-import androidx.core.view.updateLayoutParams
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.paging.LoadState
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
@@ -44,8 +29,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.google.android.material.internal.ViewUtils.addOnGlobalLayoutListener
-import com.google.android.material.internal.ViewUtils.removeOnGlobalLayoutListener
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -56,6 +39,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
     private lateinit var photoRecyclerView: RecyclerView
     private val photoGalleryViewModel: PhotoGalleryViewModel by viewModels()
     private lateinit var photoAdapter: PhotoAdapter
+    private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         StrictMode.enableDefaults()
@@ -69,6 +53,7 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
     ): View {
         val view = inflater.inflate(R.layout.fragment_photo_gallery, container, false)
         photoRecyclerView = view.findViewById(R.id.photo_recycler_view)
+        progressBar = view.findViewById(R.id.progressBar)
 
         photoRecyclerView.doOnPreDraw {
             val recyclerViewWidth = photoRecyclerView.width
@@ -86,12 +71,9 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
         photoAdapter = PhotoAdapter()
         photoRecyclerView.adapter = photoAdapter
 
-        val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(
-            this,
-            viewLifecycleOwner,
-            Lifecycle.State.RESUMED
-        )
+        photoAdapter.addLoadStateListener { state ->
+            progressBar.isVisible = state.refresh is LoadState.Loading
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(lifecycle.currentState) {
@@ -100,6 +82,13 @@ class PhotoGalleryFragment : Fragment(), MenuProvider {
                 }
             }
         }
+
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(
+            this,
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
